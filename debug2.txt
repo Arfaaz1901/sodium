@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Silicon Dioxide",
+    "type": "oxide",
+    "categories": [
+      "acidic_oxide"
+    ],
+    "ions": [],
+    "id": "SiO2",
+    "state": "solid",
+    "formula": "SiO\u2082",
+    "displayColor": "rgba(244,164,96,0.8)",
+    "color": "#f4a460",
+    "molarMass": 60.08,
+    "density": 2.65,
+    "reactivityIndex": 0,
+    "category": "salt",
+    "meltingPoint": 1710,
+    "boilingPoint": 2230,
+    "description": "Sand/Quartz. Very unreactive macromolecular structure.",
+    "hazards": [],
+    "pKa": null,
+    "oxidationState": 4,
+    "solubilityClass": "insoluble_water",
+    "flammabilityClass": "none"
+  }
+]

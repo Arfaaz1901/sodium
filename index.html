@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="ChemLab Pro - immersive 3D virtual chemistry laboratory for school students with smart reactions, safety guidance, and visual learning tools.">
+  <title>ChemLab Pro - 3D Virtual Chemistry Laboratory</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/periodic-table.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2697;</text></svg>">
+</head>
+
+<body>
+  <div id="app" class="controls-collapsed">
+    <header class="header">
+      <div class="header__brand">
+        <div class="header__logo">&#x2697;</div>
+        <div>
+          <div class="header__title">CHEMLAB PRO</div>
+          <div class="header__subtitle">3D Virtual Chemistry Laboratory</div>
+        </div>
+      </div>
+
+      <div class="header__status">
+        <span class="header__status-dot"></span>
+        <span>Learning Mode - Grade 10 Ready</span>
+      </div>
+
+      <div class="header__actions">
+        <button class="header__btn" id="lab-menu-btn" title="Switch Laboratory">&#x1F9EA;</button>
+        <button class="header__btn" id="history-btn" title="Experiment History">&#x1F4CB;</button>
+        <button class="header__btn" id="sound-btn" title="Toggle Sound">&#x1F50A;</button>
+        <button class="header__btn" id="theme-btn" title="Toggle Theme">&#x1F319;</button>
+        <button class="header__btn" id="fullscreen-btn" title="Fullscreen Lab">&#x26F6;</button>
+      </div>
+    </header>
+
+    <nav class="sidebar">
+      <button class="sidebar__btn active" data-action="lab" data-tooltip="Laboratory" title="Laboratory">&#x1F9EA;</button>
+      <button class="sidebar__btn" data-action="history" data-tooltip="History" title="History">&#x1F4DC;</button>
+      <button class="sidebar__btn" data-action="formulas" data-tooltip="Saved Formulas"
+        title="Saved Formulas">&#x1F4D8;</button>
+      <button class="sidebar__btn" data-action="save" data-tooltip="Save Formula" title="Save Formula">&#x1F4BE;</button>
+      <button class="sidebar__btn" data-action="periodic-table" data-tooltip="Periodic Table"
+        title="Periodic Table">&#x269B;</button>
+      <button class="sidebar__btn" data-action="output" data-tooltip="Output Explorer" title="Output Explorer">&#x1F4CB;</button>
+      <div class="sidebar__spacer"></div>
+      <button class="sidebar__btn" data-action="export" data-tooltip="Export Report" title="Export Report">&#x1F4E4;</button>
+      <button class="sidebar__btn" data-action="settings" data-tooltip="Settings" title="Settings">&#x2699;</button>
+    </nav>
+
+    <aside class="inventory-panel">
+      <div class="panel-header">
+        <span class="panel-header__title">Chemical Inventory</span>
+        <span class="panel-header__count" id="chemical-count">0 chemicals</span>
+      </div>
+
+      <div class="inventory-summary" id="inventory-summary">
+        <div class="inventory-summary__card inventory-summary__card--solid">
+          <span class="inventory-summary__icon">&#x25FC;</span>
+          <div>
+            <div class="inventory-summary__label">Solids</div>
+            <div class="inventory-summary__value" id="inventory-solid-count">0</div>
+          </div>
+        </div>
+        <div class="inventory-summary__card inventory-summary__card--liquid">
+          <span class="inventory-summary__icon">&#x1F4A7;</span>
+          <div>
+            <div class="inventory-summary__label">Liquids</div>
+            <div class="inventory-summary__value" id="inventory-liquid-count">0</div>
+          </div>
+        </div>
+        <div class="inventory-summary__card inventory-summary__card--gas">
+          <span class="inventory-summary__icon">&#x2601;</span>
+          <div>
+            <div class="inventory-summary__label">Gases</div>
+            <div class="inventory-summary__value" id="inventory-gas-count">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="search-bar">
+        <div class="search-bar__wrapper">
+          <span class="search-bar__icon">&#x1F50D;</span>
+          <input type="text" class="search-bar__input" id="search-input" placeholder="Search chemicals..."
+            autocomplete="off">
+        </div>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="solid">Solid</button>
+        <button class="filter-tab" data-filter="liquid">Liquid</button>
+        <button class="filter-tab" data-filter="gas">Gas</button>
+      </div>
+
+      <div class="chemical-list" id="chemical-list"></div>
+      <div id="practical-nav-root" class="practical-mode-root" hidden></div>
+    </aside>
+
+    <button class="inventory-rail-toggle" id="inventory-toggle" type="button" aria-label="Toggle chemical inventory"
+      aria-expanded="true" title="Toggle chemical inventory">
+      <span class="inventory-rail-toggle__line" aria-hidden="true"></span>
+    </button>
+
+    <main class="chamber">
+      <div class="chamber__3d" id="lab-3d-container"></div>
+      <div id="practical-overlay-root" class="practical-mode-root" hidden></div>
+
+      <div class="chamber__ingredients-overlay" id="ingredient-chips">
+        <div class="empty-state" style="padding: 10px">
+          <div style="font-size: 24px; opacity: 0.35; margin-bottom: 6px">&#x1F9EA;</div>
+          <div class="empty-state__text">Add chemicals from the inventory</div>
+        </div>
+      </div>
+
+      <div class="test-tube-drawer" id="test-tube-drawer" aria-live="polite">
+        <div class="test-tube-drawer__header">
+          <div>
+            <div class="test-tube-drawer__eyebrow">Rack Samples</div>
+            <div class="test-tube-drawer__title">Double-click the test tubes to load 3 ready samples</div>
+          </div>
+          <span class="test-tube-drawer__hint" id="test-tube-drawer-hint">One liquid, one solid, and one gas sample will appear here.</span>
+        </div>
+        <div class="test-tube-drawer__list" id="test-tube-sample-list"></div>
+      </div>
+
+      <div class="chamber__status">
+        <div class="chamber__equation" id="equation-display" title="Balanced equation">
+          Ready for experiment
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button class="clear-btn" id="clear-btn">Clear</button>
+          <button class="react-btn" id="react-btn" disabled>React</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="controls-panel">
+      <div class="control-section control-section--hero">
+        <div class="control-section__header">
+          <span class="control-section__title">Lab Conditions</span>
+          <span class="control-section__helper">Smart classroom controls</span>
+        </div>
+
+        <div class="gauge-group">
+          <div class="gauge">
+            <div class="gauge__display" id="temp-gauge-display">
+              <span class="gauge__value" id="temp-gauge-value">25</span>
+              <span class="gauge__unit">C</span>
+            </div>
+            <span class="gauge__label">Temperature</span>
+          </div>
+          <div class="gauge">
+            <div class="gauge__display" id="press-gauge-display">
+              <span class="gauge__value" id="press-gauge-value">1</span>
+              <span class="gauge__unit">atm</span>
+            </div>
+            <span class="gauge__label">Pressure</span>
+          </div>
+        </div>
+
+        <div class="range-control">
+          <div class="range-control__header">
+            <span class="range-control__label">Temperature</span>
+            <span class="range-control__value" id="temp-value">25C</span>
+          </div>
+          <input type="range" id="temp-slider" min="-50" max="300" value="25" step="1">
+        </div>
+
+        <div class="range-control">
+          <div class="range-control__header">
+            <span class="range-control__label">Pressure</span>
+            <span class="range-control__value" id="press-value">1 atm</span>
+          </div>
+          <input type="range" id="press-slider" min="0.5" max="10" value="1" step="0.1">
+        </div>
+      </div>
+
+      <div class="control-section control-section--compact">
+        <div class="control-section__header">
+          <span class="control-section__title">Smart Analytics</span>
+          <span class="control-section__helper">Live school-lab insights</span>
+        </div>
+
+        <div class="analytics-grid">
+          <div class="analytics-card" id="ph-meter-card">
+            <div class="analytics-card__top">
+              <span class="analytics-card__label">pH Meter</span>
+              <span class="analytics-card__pill" id="ph-meter-status">Neutral</span>
+            </div>
+            <div class="analytics-card__value" id="ph-meter-value">7.0</div>
+            <div class="analytics-card__meter analytics-card__meter--ph">
+              <span id="ph-meter-indicator"></span>
+            </div>
+            <div class="analytics-card__meta" id="ph-meter-label">Balanced solution</div>
+          </div>
+
+          <div class="analytics-card" id="hazard-card">
+            <div class="analytics-card__top">
+              <span class="analytics-card__label">Hazard</span>
+              <span class="analytics-card__pill" id="hazard-meter-status">Low</span>
+            </div>
+            <div class="analytics-card__value" id="hazard-meter-value">1/10</div>
+            <div class="analytics-card__meter analytics-card__meter--hazard">
+              <span id="hazard-meter-indicator"></span>
+            </div>
+            <div class="analytics-card__meta" id="hazard-meter-label">Normal classroom handling</div>
+          </div>
+
+          <div class="analytics-card">
+            <div class="analytics-card__top">
+              <span class="analytics-card__label">Product Preview</span>
+              <span class="analytics-card__pill analytics-card__pill--accent">AI</span>
+            </div>
+            <div class="analytics-card__value analytics-card__value--compact" id="product-preview-value">-</div>
+            <div class="analytics-card__meta" id="product-preview-label">Add chemicals to predict products.</div>
+          </div>
+
+          <div class="analytics-card">
+            <div class="analytics-card__top">
+              <span class="analytics-card__label">Reaction State</span>
+              <span class="analytics-card__pill analytics-card__pill--accent">Live</span>
+            </div>
+            <div class="analytics-card__value analytics-card__value--compact" id="result-state-value">Ready</div>
+            <div class="analytics-card__meta" id="result-state-label">No reaction running yet.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="results-panel">
+        <div class="control-section">
+          <div class="control-section__header">
+            <span class="control-section__title">Reaction Results</span>
+          </div>
+          <div class="empty-state" style="padding:12px">
+            <div style="font-size:20px;opacity:0.3;margin-bottom:6px">&#x1F4CA;</div>
+            <div class="empty-state__text" style="font-size:0.72rem">Run a reaction to see results</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-section">
+        <div class="control-section__header">
+          <span class="control-section__title">Safety Monitor</span>
+          <span class="control-section__helper">Warnings stay student-friendly</span>
+        </div>
+        <div class="safety-alerts" id="safety-alerts">
+          <div
+            style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:0.72rem;color:var(--accent-green)">
+            <span>OK</span>
+            <span>No safety concerns</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="prediction-panel">
+        <div class="control-section" style="border-bottom:none">
+          <div class="control-section__header">
+            <span class="control-section__title">Prediction Engine</span>
+          </div>
+          <div class="empty-state" style="padding:12px">
+            <div style="font-size:18px;opacity:0.3;margin-bottom:6px">AI</div>
+            <div class="empty-state__text" style="font-size:0.68rem">Predictions will appear when chemicals are added</div>
+          </div>
+        </div>
+      </div>
+      <div id="practical-controls-root" class="practical-mode-root" hidden></div>
+    </aside>
+
+    <button class="controls-rail-toggle" id="controls-toggle" type="button" aria-label="Toggle results panel"
+      aria-expanded="false" title="Open results panel">
+      <span class="controls-rail-toggle__line" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <div class="lab-launcher-overlay active" id="lab-launcher-overlay">
+    <div class="lab-launcher">
+      <div class="lab-launcher__eyebrow">ChemLab Pro Learning Spaces</div>
+      <h1 class="lab-launcher__title">Choose Your Laboratory</h1>
+      <p class="lab-launcher__subtitle">Keep Lab 1 for free reactions and open Lab 2 for guided practical chemistry in a full 3D classroom.</p>
+      <div class="lab-launcher__grid">
+        <button class="lab-launcher__card" data-lab-select="lab1" type="button">
+          <span class="lab-launcher__badge">Lab 1</span>
+          <strong>Free Reaction Lab</strong>
+          <span>Open the original reaction simulator with inventory, reaction engine, and smart analytics.</span>
+        </button>
+        <button class="lab-launcher__card lab-launcher__card--accent" data-lab-select="lab2" type="button">
+          <span class="lab-launcher__badge">Lab 2</span>
+          <strong>Practical Chemistry Lab</strong>
+          <span>Enter a polished 3D school laboratory with apparatus workflows, guided experiments, scoring, and AI help.</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal__header">
+        <span class="modal__title" id="modal-title">Modal Title</span>
+        <button class="modal__close" id="modal-close" title="Close">x</button>
+      </div>
+      <div class="modal__body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="add-modal-overlay">
+    <div class="modal" style="max-width: 420px">
+      <div class="modal__header">
+        <span class="modal__title">Add Chemical</span>
+        <button class="modal__close" id="add-cancel-btn" title="Close">x</button>
+      </div>
+      <div class="modal__body">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:1.1rem;font-weight:600;color:var(--text-primary)" id="add-modal-name">Chemical Name</div>
+          <div style="font-family:var(--font-mono);color:var(--text-accent);font-size:0.85rem" id="add-modal-formula">
+            Formula</div>
+          <div style="margin-top:8px;font-size:0.72rem;color:var(--text-muted)" id="add-modal-context">
+            This sample will be added to the active apparatus.
+          </div>
+        </div>
+        <div class="add-form">
+          <div class="add-form__row">
+            <div class="add-form__group">
+              <label class="add-form__label">Quantity (mol)</label>
+              <input type="number" class="add-form__input" id="add-qty-input" value="1.0" min="0.1" max="20" step="0.1">
+            </div>
+            <div class="add-form__group">
+              <label class="add-form__label">Concentration (M)</label>
+              <input type="number" class="add-form__input" id="add-conc-input" value="1.0" min="0.1" max="10" step="0.1">
+            </div>
+          </div>
+          <button class="btn-primary w-full" id="add-confirm-btn" style="margin-top:8px">Add to Chamber</button>
+          <div class="add-modal-tube-row">
+            <button class="add-modal-tube-btn" id="add-tube-0-btn" type="button">🧫 Test Tube 1</button>
+            <button class="add-modal-tube-btn" id="add-tube-1-btn" type="button">🧫 Test Tube 2</button>
+            <button class="add-modal-tube-btn" id="add-tube-2-btn" type="button">🧫 Test Tube 3</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    (function () {
+      if (window.location.protocol !== 'file:') return;
+
+      const targetUrl = 'http://localhost:5000/';
+      const banner = document.createElement('div');
+      banner.style.cssText = [
+        'position:fixed',
+        'top:14px',
+        'left:50%',
+        'transform:translateX(-50%)',
+        'z-index:9999',
+        'max-width:min(760px, calc(100vw - 32px))',
+        'padding:12px 16px',
+        'border-radius:14px',
+        'border:1px solid rgba(245,158,11,0.35)',
+        'background:rgba(24,16,10,0.92)',
+        'color:#fff7ed',
+        'font:600 14px/1.5 Segoe UI, Arial, sans-serif',
+        'box-shadow:0 14px 30px rgba(0,0,0,0.22)'
+      ].join(';');
+      banner.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="font-size:18px;line-height:1">!</div>
+          <div>
+            <div>Open this project through the Flask server, not as <code>file://</code>.</div>
+            <div style="margin-top:4px;font-weight:500;opacity:0.9">
+              Redirecting to <a href="${targetUrl}" style="color:#fdba74">${targetUrl}</a> now. If it does not open, run <code>python backend/server.py</code>.
+            </div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(banner);
+
+      window.setTimeout(() => {
+        window.location.replace(targetUrl);
+      }, 500);
+    })();
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
